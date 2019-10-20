@@ -14,12 +14,19 @@ function $$(parent: HTMLElement | Document = document) {
 
 type FnAny = { (a: any): any };
 
-function pipe<T1, T2>(fn: FnAny, ...fns: FnAny[]) {
-  return (a: T1) => fns.reduce((acc, fn2) => fn2(acc), fn(a)) as T2;
-}
-
-function compose<T1, T2>(...fns: FnAny[]) {
-  return pipe<T1, T2>(fns.pop() as FnAny, ...fns.reverse());
+namespace F {
+  export function flip<T, U, V>(f: { (a: T, b: U): V }) {
+    return (b: U, a: T) => f(a, b);
+  }
+  export function flipCurried<T, U, V>(f: { (a: T, b: U): V }) {
+    return (b: U) => (a: T) => f(a, b);
+  }
+  export function pipe<T, U>(fn: FnAny, ...fns: FnAny[]) {
+    return (a: T) => fns.reduce((acc, fn2) => fn2(acc), fn(a)) as U;
+  }
+  export function compose<T, U>(...fns: FnAny[]) {
+    return pipe<T, U>(fns.pop() as FnAny, ...fns.reverse());
+  }
 }
 
 class Maybe {
@@ -48,9 +55,9 @@ interface FnMaybe<T, U> { (a: T): U | null };
 interface IMaybe<T> {
   value: T | void;
   map<U>(f: FnMaybe<T, U>): Just<U> | Nothing;
-  getOrElse(_: any): any;
+  getOrElse<U>(_: U): T | U;
   filter(f: FnAny): Just<T> | Nothing;
-  chain<U>(f: FnMaybe<T, U>): Just<U> | Nothing;
+  chain<U>(f: FnMaybe<T, U>): U | Nothing;
 }
 
 class Just<T> extends Maybe implements IMaybe<T> {
@@ -63,14 +70,16 @@ class Just<T> extends Maybe implements IMaybe<T> {
   public map<U>(f: FnMaybe<T, U>) {
     return Maybe.fromNullable<U>(f(this.value));
   }
-  public getOrElse = (_: any) => this.value;
-  public filter(f: FnAny) {
+  public getOrElse<U>(_: U) {
+    return this.value as T | U;
+  }
+  public filter<U>(f: FnMaybe<T, U>) {
     if (f(this.value) == null) {
       return Maybe.nothing();
     }
     return this as Just<T>;
   }
-  public chain<U>(f: FnAny) {
+  public chain<U>(f: FnMaybe<T, U>) {
     return f(this.value) as U;
   }
 }
@@ -79,12 +88,12 @@ class Nothing extends Maybe implements IMaybe<never> {
   get value() {
     throw new TypeError(`Can't extract the value of a Nothing.`);
   }
-  public map<T, U>(_: FnMaybe<T, U>) {
-    return this;
+  public map(_: any) {
+    return this as Nothing;
   }
   public getOrElse = (other: any) => other;
-  public filter = (_: any) => this;
-  public chain = (_: any) => this;
+  public filter = (_: any) => this as Nothing;
+  public chain = (_: any) => this as Nothing;
 }
 
 /**
