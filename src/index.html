@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
     <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
     <title>Document</title>
@@ -12,21 +13,40 @@
     <aside></aside>
     <main>
         <section>
+            <div class="tree-buttons">
+                <button class="add-tree-down btn btn-sm btn-primary"><i class="fa fa-arrow-down"></i>下に追加</button>
+                <button class="add-tree-up btn btn-sm btn-primary"><i class="fa fa-arrow-up"></i>上に追加</button>
+                <button class="add-tree-join btn btn-sm btn-primary"><i class="fa fa-share-alt"></i>結合して追加</button>
+                <button class="add-tree-del btn btn-sm btn-danger"><i class="fa fa-trash"></i>削除</button>
+            </div>
             <div class="rootNode"></div>
         </section>
     </main>
     <dialog></dialog>
     <template>
-        <div class="node">
+        <div class="node" tabindex="0">
+            <div></div>
+            <div></div>
             <div>
-                <select>
+                <select class="form-control logical-operator">
                     <option value="AND">AND</option>
                     <option value="OR">OR</option>
+                    <option value="NAND">NAND</option>
                 </select>
             </div>
+            <div class="leaf-area"></div>
+            <div></div>
             <div></div>
         </div>
-        <div class="leaf"></div>
+        <div class="leaf" tabindex="0">
+            <div class="leaf-number"></div>
+            <select class="form-control filter-type">
+                <option value="filter-field">項目検索</option>
+                <option value="filter-relative">相対検索</option>
+            </select>
+            <div class="leaf-content"></div>
+            <div class="leaf-menu"><button class="btn-leaf-menu btn btn-xs"><i class="fa fa-ellipsis-v"></i></button></div>
+        </div>
     </template>
     <script src="../node_modules/jquery/dist/jquery.min.js"></script>
     <script src="js/utils.js"></script>
