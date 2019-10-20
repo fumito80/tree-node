@@ -8,7 +8,7 @@ function $<T>(parent: HTMLElement | Document = document) {
 
 function $$(parent: HTMLElement | Document = document) {
   return (selector: string) => {
-    return [...parent.querySelectorAll(selector) as NodeListOf<HTMLElement>];
+    return Array.from<HTMLElement>(parent.querySelectorAll(selector));
   }
 }
 
@@ -17,6 +17,9 @@ type FnAny = { (a: any): any };
 namespace F {
   export function flip<T, U, V>(f: { (a: T, b: U): V }) {
     return (b: U, a: T) => f(a, b);
+  }
+  export function curry<T, U, V>(f: { (a: T, b: U): V }) {
+    return (a: T) => (b: U) => f(a, b);
   }
   export function flipCurried<T, U, V>(f: { (a: T, b: U): V }) {
     return (b: U) => (a: T) => f(a, b);

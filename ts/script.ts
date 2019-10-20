@@ -3,12 +3,12 @@
 const rootNode = $()('.rootNode') as HTMLElement;
 const template = $()('template') as HTMLTemplateElement;
 
-function getAddress(leafOrNode: HTMLDivElement, ): string {
-  return '';
-}
+// function getAddress(leafOrNode: HTMLDivElement, ): string {
+//   return '';
+// }
 
 function addTemplate(selecor: string) {
-  return (address?: string) => {
+  return (address?: string): void => {
     const target = Maybe.fromNullable(address)
       .map($<HTMLDivElement>(rootNode))
       .getOrElse(rootNode);
@@ -19,14 +19,14 @@ function addTemplate(selecor: string) {
   }
 }
 
-function addNode(address?: string) {
-  return addTemplate('.node')(address);
+function addNode(address?: string): void {
+  addTemplate('.node')(address);
 }
 
-function addLeaf(address?: string) {
-  return addTemplate('.leaf')(address);
-}
+// function addLeaf(address?: string): void {
+//   addTemplate('.leaf')(address);
+// }
 
-document.addEventListener('DOMContentLoaded', _ => {
+document.addEventListener('DOMContentLoaded', () => {
   addNode();
 });
