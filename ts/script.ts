@@ -93,12 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
     listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getTargetSelector());
   });
-  getEventListeners('.add-leaf-down, .add-leaf-up')
-    .map((listener) => listener('click', preAddLeaf));
-  getEventListener('.add-leaf-up')('click', (e) => {
-    // const { focusedSelector } = (e.target as HTMLElement).dataset;
-    // addLeaf(getTarget(focusedSelector || null));
-  });
+  getEventListeners('.add-leaf-down, .add-leaf-up').map((listener) => listener('click', preAddLeaf));
   getEventListener('.del-tree')('click', (e) => {
     const { focusedSelector } = (e.target as HTMLElement).dataset;
     if (focusedSelector) {
