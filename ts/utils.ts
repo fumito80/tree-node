@@ -1,15 +1,15 @@
 'use strict';
 
-function $<T extends HTMLElement>(selector: string, parent: Element | Document = document) {
+function $<T extends HTMLElement>(selector: string, parent: HTMLElement | Document = document) {
   return parent.querySelector(selector) as T | null;
 }
 
 function $$(selector: string, parent: HTMLElement | Document = document) {
-  return Array.from<Element>(parent.querySelectorAll(selector));
+  return Array.from<HTMLElement>(parent.querySelectorAll(selector));
 }
 
-function insertBefore(refNode: Element | null = null) {
-  return (parent: HTMLElement | null = null, newNode: Element | null = null) => {
+function insertBefore(refNode: HTMLElement | null = null) {
+  return (parent: HTMLElement | null = null, newNode: HTMLElement | null = null) => {
     if (parent == null || newNode == null) {
       return null;
     }
@@ -26,11 +26,7 @@ function getEventListener<T extends HTMLElement>(selector: string) {
 }
 
 function getEventListeners(selector: string) {
-  const targets = $$(selector);
-  if (targets.length === 0) {
-    return [];
-  }
-  return targets.map((target) => target.addEventListener.bind(target));
+  return $$(selector).map((target) => target.addEventListener.bind(target));
 }
 
 function setElementText(el: HTMLElement | null, text: string) {

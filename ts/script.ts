@@ -3,7 +3,7 @@
 const rootNode = $('.rootNode') as HTMLElement;
 const template = $('template') as HTMLTemplateElement;
 
-function addTemplate(template: HTMLTemplateElement, selector: string, parent: HTMLElement, target: Element | null = null) {
+function addTemplate(template: HTMLTemplateElement, selector: string, parent: HTMLElement, target: HTMLElement | null = null) {
   return Maybe.of(selector)
     .map<HTMLElement>(template.content.querySelector.bind(template.content))
     .map(F.flipCurried(document.importNode.bind(document))(true))
@@ -11,21 +11,29 @@ function addTemplate(template: HTMLTemplateElement, selector: string, parent: HT
     .getOrElse(null);
 }
 
-function getSelector(leafOrNode: HTMLElement, path: string[] = [':scope']): string | null {
+function getSelector(leafOrNode: HTMLElement, path: string[] = []): string | null {
   if (leafOrNode.parentElement == null || leafOrNode.classList.contains('rootNode')) {
-    return path.join(' > ') || null;
+    return [':scope', ...path].join(' > ') || null;
   }
-  const index = Array.from(leafOrNode.parentElement.children).indexOf(leafOrNode) + 1;
-  return getSelector(leafOrNode.parentElement, [...path, `div:nth-child(${index})`]);
+  let selector = '';
+  if (Array.from(leafOrNode.classList).some((className) => ['leaf', 'node'].includes(className))) {
+    const index = Array.from(leafOrNode.parentElement.children).indexOf(leafOrNode) + 1;
+    selector = `div:nth-child(${index})`;
+  } else if (leafOrNode.classList.contains('leaf-area')) {
+    selector = `.leaf-area`;
+  } else {
+    selector = leafOrNode.localName;
+  }
+  return getSelector(leafOrNode.parentElement, [selector, ...path]);
 }
 
-function addNode(parent: HTMLElement, target: Element) {
+function addNode(parent: HTMLElement, target: HTMLElement) {
   return Maybe.fromNullable(addTemplate(template, '.node', parent, target))
     .map(F.curry($)('.leaf-area'))
     .map(F.flipCurried(insertBefore())(target));
 }
 
-function addLeaf(parent: HTMLElement, target: Element | null = null) {
+function addLeaf(parent: HTMLElement, target: HTMLElement | null = null) {
   Maybe.fromNullable(addTemplate(template, '.leaf', parent, target))
     .map((leaf) => {
       const index = $$('.leaf', rootNode).indexOf(leaf) + 1;
@@ -45,45 +53,48 @@ function getTarget(selector: string | null) {
     .getOrElse(null);
 }
 
+function preAddLeaf(e: MouseEvent) {
+  const button = e.target as HTMLButtonElement;
+  const dir = button.classList.contains('add-leaf-up') ? 'up' : 'down';
+  if (rootNode.children.length === 0) {
+    // 最初
+    addLeaf(rootNode);
+    return;
+  }
+  if (rootNode.firstElementChild && rootNode.firstElementChild.classList.contains('leaf')) {
+    // Leaf一個 -> join
+    addNode(rootNode, rootNode.firstElementChild as HTMLElement)
+      .map((leaf) => addLeaf(leaf.parentElement as HTMLElement, dir === 'up' ? leaf : null));
+    return;
+  }
+  const { focusedSelector } = button.dataset;
+  const self = getTarget(focusedSelector || null);
+  if (self == null) {
+    // フォーカス無し　-> 一番外枠の最後に追加
+    Maybe.fromNullable($('.leaf-area', rootNode))
+      .map((leafArea) => addLeaf(leafArea, dir === 'up' ? leafArea.firstElementChild as HTMLElement : null))
+    return;
+  }
+  if (self.parentElement) {
+    // フォーカス有り
+    const parent = self.parentElement;
+    if (parent.classList.contains('rootNode')) {
+      // 一番外枠 -> join
+      addNode(rootNode, rootNode.firstElementChild as HTMLElement)
+        .map((leaf) => addLeaf(leaf.parentElement as HTMLElement, dir === 'up' ? leaf : null));
+      return;
+    }
+    // 通常の追加
+    addLeaf(self.parentElement, dir === 'up' ? self : self.nextElementSibling as HTMLElement);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
     listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getTargetSelector());
   });
-  getEventListener('.add-leaf-down')('click', (e) => {
-    if (rootNode.children.length === 0) {
-      // 最初
-      addLeaf(rootNode);
-      return;
-    }
-    if (rootNode.firstElementChild && rootNode.firstElementChild.classList.contains('leaf')) {
-      // Leaf一個 -> join
-      addNode(rootNode, rootNode.firstElementChild)
-        .map((leaf) => leaf.parentElement)
-        .map(addLeaf);
-      return;
-    }
-    const { focusedSelector } = (e.target as HTMLElement).dataset;
-    const self = getTarget(focusedSelector || null);
-    if (self == null) {
-      // フォーカス無し　-> 一番外枠の最後に追加
-      Maybe.fromNullable(rootNode.firstElementChild)
-        .map((el) => $('.leaf-area', el))
-        .map(F.curry(addLeaf))
-        .map((f) => f(null));
-      return;
-    }
-    if (self.parentElement) {
-      // フォーカス有り
-      const parent = self.parentElement;
-      if (parent.classList.contains('.rootNode')) {
-        // 一番外枠
-        // join
-        return;
-      }
-      // 通常の追加
-      addLeaf(self.parentElement, self.nextElementSibling);
-    }
-  });
+  getEventListeners('.add-leaf-down, .add-leaf-up')
+    .map((listener) => listener('click', preAddLeaf));
   getEventListener('.add-leaf-up')('click', (e) => {
     // const { focusedSelector } = (e.target as HTMLElement).dataset;
     // addLeaf(getTarget(focusedSelector || null));
