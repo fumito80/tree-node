@@ -1,16 +1,38 @@
 'use strict';
 
-function $<T>(parent: HTMLElement | Document = document) {
-  return (selector: string) => {
-    return parent.querySelector(selector) as T | null;
+function $<T extends HTMLElement>(selector: string, parent: HTMLElement | Document = document) {
+  return parent.querySelector(selector) as T | null;
+}
+
+function $$(selector: string, parent: HTMLElement | Document = document) {
+  return Array.from<HTMLElement>(parent.querySelectorAll(selector));
+}
+
+function appendChild(parent: HTMLElement, newChild: HTMLElement) {
+  if (parent == null || newChild == null) {
+    return null;
+  }
+  return parent.appendChild(newChild);
+}
+
+function getEventListener<T extends HTMLElement>(selector: string) {
+  const target = $<T>(selector);
+  if (target == null) {
+    return () => null;
+  }
+  return target.addEventListener.bind(target);
+}
+
+function setElementText(text: string) {
+  return (el: HTMLElement | null) => {
+    if (el != null) {
+      el.textContent = text;
+    }
+    return el;
   }
 }
 
-function $$(parent: HTMLElement | Document = document) {
-  return (selector: string) => {
-    return Array.from<HTMLElement>(parent.querySelectorAll(selector));
-  }
-}
+const I = <T>(a: T) => a;
 
 type FnAny = { (a: any): any };
 
@@ -33,17 +55,20 @@ namespace F {
 }
 
 class Maybe {
-  public static just<T>(a: T) {
-    return new Just<T>(a);
+  public static just<T>(value: T) {
+    return new Just<T>(value);
   }
   public static nothing() {
     return new Nothing();
   }
-  public static fromNullable<T>(a?: T | null) {
-    return (a != null ? Maybe.just<T>(a) : Maybe.nothing()) as Just<T>;
+  public static fromNullable<T>(value: T | null | undefined): Just<T> {
+    if (value == null) {
+      return Maybe.nothing() as Just<T>;
+    }
+    return Maybe.just<T>(value);
   }
-  public static of<T>(a: T) {
-    return Maybe.just<T>(a);
+  public static of<T>(value: T) {
+    return Maybe.just<T>(value);
   }
   get isNothing() {
     return false;
@@ -68,22 +93,22 @@ class Just<T> extends Maybe implements IMaybe<T> {
     super();
   }
   get value() {
-    return this._value;
+    return this._value as T | void;
   }
   public map<U>(f: FnMaybe<T, U>) {
-    return Maybe.fromNullable<U>(f(this.value));
+    return Maybe.fromNullable<U>(f(this._value));
   }
   public getOrElse<U>(_: U) {
-    return this.value as T | U;
+    return this._value as T | U;
   }
   public filter<U>(f: FnMaybe<T, U>) {
-    if (f(this.value) == null) {
+    if (f(this._value) == null) {
       return Maybe.nothing();
     }
     return this as Just<T>;
   }
   public chain<U>(f: FnMaybe<T, U>) {
-    return f(this.value) as U;
+    return f(this._value) as U;
   }
 }
 
@@ -102,47 +127,64 @@ class Nothing extends Maybe implements IMaybe<never> {
 /**
  * Either monad
  */
-// class Either {
-//   public static left = (a) => new Left(a);
-//   public static right = (a) => new Right(a);
-//   public static fromNullable = (val) => val != null ? Either.right(val) : Either.left(val);
-//   public static of = (a) => Either.right(a);
-//   constructor(protected _value) {}
-//   get value() {
-//     return this._value;
-//   }
-// }
+class Either<T> {
+  public static left<U>(value: U) {
+    return new Left(value);
+  }
+  public static right<U>(value: U) {
+    return new Right(value);
+  }
+  public static fromNullable<U>(value: U | null | undefined) {
+    if (value == null) {
+      return Either.left(value);
+    }
+    return Either.right(value);
+  }
+  public static of<U>(value: U) {
+    return Either.right(value);
+  }
+  constructor(protected _value: T) {}
+  get value() {
+    return this._value as T | void;
+  }
+}
 
-// interface IEither {
-//   value;
-//   map(f);
-//   getOrElse(_);
-//   orElse(f);
-//   chain(f);
-//   getOrElseThrow(a);
-//   filter(f);
-// }
+interface IEither<T> {
+  value: T | void;
+  map<U>(f: FnMaybe<T, U>): Right<U | null> | Left<T>;
+  // getOrElse(_);
+  // orElse(f);
+  // chain(f);
+  // getOrElseThrow(a);
+  // filter(f);
+}
 
-// class Right extends Either implements IEither {
-//   get value() {
-//     return this.value;
-//   }
-//   public map = (f) => Either.of(f(this.value));
-//   public getOrElse = (_) => this.value;
-//   public orElse = (_) => this;
-//   public chain = (f) => f(this.value);
-//   public getOrElseThrow = (a) => this.value;
-//   public filter = (f) => Either.fromNullable(f(this.value) ? this.value : null);
-// }
+class Right<T> extends Either<T> implements IEither<T> {
+  get value() {
+    return this._value;
+  }
+  public map<U>(f: FnMaybe<T, U>) {
+    return Either.of(f(this._value));
+  }
+  public getOrElse = () => this.value;
+  public orElse = () => this;
+  // public chain = (f) => f(this.value);
+  // public getOrElseThrow = (a) => this.value;
+  // public filter = (f) => Either.fromNullable(f(this.value) ? this.value : null);
+}
 
-// class Left extends Either implements IEither {
-//   get value() {
-//     throw new TypeError(`Can't extract the value of a Left(a).`);
-//   }
-//   public map = (_) => this;
-//   public getOrElse = (other) => other;
-//   public orElse = (f) => f(this.value);
-//   public chain = (f) => this;
-//   public getOrElseThrow = (a) => {throw new Error(a); };
-//   public filter = (f) => this;
-// }
+class Left<T> extends Either<T> implements IEither<T> {
+  get value() {
+    throw new TypeError(`Can't extract the value of a Left(a).`);
+  }
+  public map = () => this;
+  public getOrElse<U>(other: U) {
+    return other;
+  }
+  public orElse<U>(f: FnMaybe<T, U>) {
+    return f(this._value);
+  }
+  // public chain = (f) => this;
+  // public getOrElseThrow = (a) => {throw new Error(a); };
+  // public filter = (f) => this;
+}
