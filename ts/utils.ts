@@ -1,18 +1,20 @@
 'use strict';
 
-function $<T extends HTMLElement>(selector: string, parent: HTMLElement | Document = document) {
+function $<T extends HTMLElement>(selector: string, parent: Element | Document = document) {
   return parent.querySelector(selector) as T | null;
 }
 
 function $$(selector: string, parent: HTMLElement | Document = document) {
-  return Array.from<HTMLElement>(parent.querySelectorAll(selector));
+  return Array.from<Element>(parent.querySelectorAll(selector));
 }
 
-function appendChild(parent: HTMLElement, newChild: HTMLElement) {
-  if (parent == null || newChild == null) {
-    return null;
+function insertBefore(refNode: Element | null = null) {
+  return (parent: HTMLElement | null = null, newNode: Element | null = null) => {
+    if (parent == null || newNode == null) {
+      return null;
+    }
+    return parent.insertBefore(newNode, refNode);
   }
-  return parent.appendChild(newChild);
 }
 
 function getEventListener<T extends HTMLElement>(selector: string) {
@@ -23,13 +25,19 @@ function getEventListener<T extends HTMLElement>(selector: string) {
   return target.addEventListener.bind(target);
 }
 
-function setElementText(text: string) {
-  return (el: HTMLElement | null) => {
-    if (el != null) {
-      el.textContent = text;
-    }
-    return el;
+function getEventListeners(selector: string) {
+  const targets = $$(selector);
+  if (targets.length === 0) {
+    return [];
   }
+  return targets.map((target) => target.addEventListener.bind(target));
+}
+
+function setElementText(el: HTMLElement | null, text: string) {
+  if (el != null) {
+    el.textContent = text;
+  }
+  return el;
 }
 
 const I = <T>(a: T) => a;

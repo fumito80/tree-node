@@ -31,6 +31,11 @@ body {
     border-radius: 6px;
 }
 
+.logical-operator-wrap {
+    display: flex;
+    align-items: center;
+}
+
 .logical-operator {
     width: min-content;
     height: min-content;
