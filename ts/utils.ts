@@ -17,6 +17,14 @@ function insertBefore(refNode: HTMLElement | null = null) {
   }
 }
 
+function removeChild(target: HTMLElement) {
+  const parent = target.parentElement;
+  if (parent) {
+    parent.removeChild(target);
+  }
+  return parent;
+}
+
 function getEventListener<T extends HTMLElement>(selector: string) {
   const target = $<T>(selector);
   if (target == null) {
@@ -88,7 +96,7 @@ interface IMaybe<T> {
   value: T | void;
   map<U>(f: FnMaybe<T, U>): Just<U> | Nothing;
   getOrElse<U>(_: U): T | U;
-  filter(f: FnAny): Just<T> | Nothing;
+  filter<U>(f: FnMaybe<T, U | boolean>): Just<T> | Nothing;
   chain<U>(f: FnMaybe<T, U>): U | Nothing;
 }
 
@@ -105,9 +113,10 @@ class Just<T> extends Maybe implements IMaybe<T> {
   public getOrElse<U>(_: U) {
     return this._value as T | U;
   }
-  public filter<U>(f: FnMaybe<T, U>) {
-    if (f(this._value) == null) {
-      return Maybe.nothing();
+  public filter<U>(f: FnMaybe<T, U | boolean>): Just<T> {
+    const ret = f(this._value);
+    if (ret == null || ret === false) {
+      return Maybe.nothing() as Just<T>;
     }
     return this as Just<T>;
   }

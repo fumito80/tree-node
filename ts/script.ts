@@ -38,7 +38,8 @@ function addLeaf(parent: HTMLElement, target: HTMLElement | null = null) {
     .map((leaf) => {
       const index = $$('.leaf', rootNode).indexOf(leaf) + 1;
       setElementText($('.leaf-number', leaf), String(index));
-    })
+    });
+  renumberLeaf();
 }
 
 function getTargetSelector() {
@@ -51,6 +52,10 @@ function getTarget(selector: string | null) {
   return Maybe.fromNullable(selector)
     .map(F.flipCurried($)<HTMLElement>(rootNode))
     .getOrElse(null);
+}
+
+function renumberLeaf() {
+  $$('.leaf').map((leaf, i) => setElementText($('.leaf-number', leaf), String(i + 1)));
 }
 
 function preAddLeaf(e: MouseEvent) {
@@ -95,17 +100,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   getEventListeners('.add-leaf-down, .add-leaf-up').map((listener) => listener('click', preAddLeaf));
   getEventListener('.del-tree')('click', (e) => {
-    const { focusedSelector } = (e.target as HTMLElement).dataset;
-    if (focusedSelector) {
-      const target = getTarget(focusedSelector);
-      if (target && target.parentElement) {
-        target.parentElement.removeChild(target);
-      }
-    }
+    Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
+      .map(getTarget)
+      .map(removeChild)
+      .filter((parent) => $$(':scope > .leaf, :scope > .node', parent).length === 1)
+      .map((parent) => {
+        if (parent.parentElement) {
+          const node = $(':scope > .leaf, :scope > .node', parent);
+          insertBefore(parent.parentElement)(parent.parentElement.parentElement, node);
+          removeChild(parent.parentElement);
+        }
+      });
+    renumberLeaf();
   });
   getEventListener('.add-leaf-join')('click', (e) => {
-    const { focusedSelector } = (e.target as HTMLElement).dataset;
-    // addNode(getTarget(focusedSelector || null));
+    Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
+      .map(getTarget)
+      .map((target) => {
+        if (target.parentElement) {
+          addNode(target.parentElement, target)
+            .map((leaf) => addLeaf(leaf.parentElement as HTMLElement));
+        }
+      });
   });
-  // addLeaf();
 });
