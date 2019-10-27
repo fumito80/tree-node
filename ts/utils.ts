@@ -17,20 +17,22 @@ function insertBefore(refNode: HTMLElement | null = null) {
   }
 }
 
-function removeChild(target: HTMLElement) {
-  const parent = target.parentElement;
-  if (parent) {
-    parent.removeChild(target);
+function append(newNode: HTMLElement | null) {
+  return (refNode: HTMLElement | null = null) => (parent: HTMLElement | null) => {
+    insertBefore(refNode)(parent, newNode);
+    return parent;
   }
-  return parent;
 }
 
-function getEventListener<T extends HTMLElement>(selector: string) {
-  const target = $<T>(selector);
-  if (target == null) {
-    return () => null;
+function getEventListener<T extends HTMLElement>(targetOrSelector: string | HTMLElement) {
+  if (typeof targetOrSelector === 'string') {
+    const target = $<T>(targetOrSelector);
+    if (target == null) {
+      return () => null;
+    }
+    return target.addEventListener.bind(target);
   }
-  return target.addEventListener.bind(target);
+  return targetOrSelector.addEventListener.bind(targetOrSelector);
 }
 
 function getEventListeners(selector: string) {
@@ -44,7 +46,11 @@ function setElementText(el: HTMLElement | null, text: string) {
   return el;
 }
 
-const I = <T>(a: T) => a;
+interface FnSingle<T, U> { (a: T): U };
+
+const I = <T>(a: T) => a; // identity
+const B = <T, U, V>(f: FnSingle<T, V>) => (g: FnSingle<U, T>) => (x: U) => f(g(x)); // compose
+const C = <T, U, V>(f: FnSingle<T, FnSingle<U, V>>) => (y: U) => (x: T) => f(x)(y); // flip
 
 type FnAny = { (a: any): any };
 
@@ -98,6 +104,7 @@ interface IMaybe<T> {
   getOrElse<U>(_: U): T | U;
   filter<U>(f: FnMaybe<T, U | boolean>): Just<T> | Nothing;
   chain<U>(f: FnMaybe<T, U>): U | Nothing;
+  tap<U>(f: FnMaybe<T, U>): Just<T> | Nothing;
 }
 
 class Just<T> extends Maybe implements IMaybe<T> {
@@ -123,6 +130,10 @@ class Just<T> extends Maybe implements IMaybe<T> {
   public chain<U>(f: FnMaybe<T, U>) {
     return f(this._value) as U;
   }
+  public tap<U>(f: FnMaybe<T, U>) {
+    f(this._value);
+    return this as Just<T>;
+  }
 }
 
 class Nothing extends Maybe implements IMaybe<never> {
@@ -135,6 +146,7 @@ class Nothing extends Maybe implements IMaybe<never> {
   public getOrElse = (other: any) => other;
   public filter = (_: any) => this as Nothing;
   public chain = (_: any) => this as Nothing;
+  public tap = (_: any) => this as Nothing;
 }
 
 /**
@@ -160,6 +172,7 @@ class Either<T> {
   get value() {
     return this._value as T | void;
   }
+  public getOr = () => this.value;
 }
 
 interface IEither<T> {
@@ -183,7 +196,13 @@ class Right<T> extends Either<T> implements IEither<T> {
   public orElse = () => this;
   // public chain = (f) => f(this.value);
   // public getOrElseThrow = (a) => this.value;
-  // public filter = (f) => Either.fromNullable(f(this.value) ? this.value : null);
+  public filter<U>(f: FnMaybe<T, U | boolean>) { //Either.fromNullable(f(this._value) ? this._value : null);
+    const ret = f(this._value);
+    if (ret == null || ret === false) {
+      return Either.left(this.value);
+    }
+    return Either.right(this.value);
+  }
 }
 
 class Left<T> extends Either<T> implements IEither<T> {
@@ -199,5 +218,5 @@ class Left<T> extends Either<T> implements IEither<T> {
   }
   // public chain = (f) => this;
   // public getOrElseThrow = (a) => {throw new Error(a); };
-  // public filter = (f) => this;
+  public filter = (_: any) => this as Left<T>;
 }

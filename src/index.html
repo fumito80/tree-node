@@ -13,20 +13,20 @@
     <aside></aside>
     <main>
         <section>
-            <form class="playground">
-                <div class="tree-buttons">
-                    <button type="button" class="add-leaf-down btn btn-sm btn-primary"><i class="fa fa-arrow-down"></i>下に追加</button>
-                    <button type="button" class="add-leaf-up btn btn-sm btn-primary"><i class="fa fa-arrow-up"></i>上に追加</button>
-                    <button type="button" class="add-leaf-join btn btn-sm btn-primary"><i class="fa fa-share-alt"></i>結合して追加</button>
-                    <button type="button" class="del-tree btn btn-sm btn-danger"><i class="fa fa-trash"></i>削除</button>
-                </div>
+            <div class="tree-buttons">
+                <button type="button" class="add-leaf-down btn btn-sm btn-primary"><i class="fa fa-arrow-down"></i>下に追加</button>
+                <button type="button" class="add-leaf-up btn btn-sm btn-primary"><i class="fa fa-arrow-up"></i>上に追加</button>
+                <button type="button" class="add-leaf-join btn btn-sm btn-primary"><i class="fa fa-share-alt"></i>結合して追加</button>
+                <button type="button" class="del-tree btn btn-sm btn-danger"><i class="fa fa-trash"></i>削除</button>
+            </div>
+            <div class="playground">
                 <div class="rootNode leaf-area"></div>
-            </form>
+            </div>
         </section>
     </main>
     <dialog></dialog>
     <template>
-        <div class="node" tabindex="0">
+        <div class="node" tabindex="0" draggable="true">
             <div class="logical-operator-wrap">
                 <select class="form-control logical-operator">
                     <option value="AND">AND</option>
@@ -36,15 +36,16 @@
             </div>
             <div class="leaf-area"></div>
         </div>
-        <div class="leaf" tabindex="0">
+        <div class="leaf" tabindex="0" draggable="true">
             <div class="leaf-number"></div>
             <select class="form-control filter-type">
                 <option value="filter-field">項目検索</option>
                 <option value="filter-relative">相対検索</option>
             </select>
             <div class="leaf-content"></div>
-            <div class="leaf-menu"><button class="btn-leaf-menu btn btn-xs"><i class="fa fa-ellipsis-v"></i></button></div>
+            <div class="leaf-menu"><button type="button" class="btn-leaf-menu btn btn-xs"><i class="fa fa-ellipsis-v"></i></button></div>
         </div>
+        <div class="drop-row"></div>
     </template>
     <script src="../node_modules/jquery/dist/jquery.min.js"></script>
     <script src="js/utils.js"></script>

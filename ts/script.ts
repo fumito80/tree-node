@@ -3,11 +3,28 @@
 const rootNode = $('.rootNode') as HTMLElement;
 const template = $('template') as HTMLTemplateElement;
 
-function addTemplate(template: HTMLTemplateElement, selector: string, parent: HTMLElement, target: HTMLElement | null = null) {
-  return Maybe.of(selector)
-    .map<HTMLElement>(template.content.querySelector.bind(template.content))
+type Dir = 'top' | 'bottom';
+
+function getTemplate(selector: string) {
+  return Maybe.fromNullable(template.content.querySelector<HTMLElement>(selector))
     .map(F.flipCurried(document.importNode.bind(document))(true))
-    .map(F.curry(insertBefore(target))(parent))
+    .getOrElse(null);
+}
+
+function getDropRow() {
+  return Maybe.fromNullable(getTemplate('.drop-row'))
+    .tap((el) => {
+      el.addEventListener('dragenter', (e) => {
+        setCss(e.target as HTMLElement, 'background-color: #44c0ff');
+        e.preventDefault();
+        return false;
+      });
+    })
+    .tap((el) => {
+      el.addEventListener('dragleave', (e) => {
+        setCss(e.target as HTMLElement, 'background-color: white');
+      });
+    })
     .getOrElse(null);
 }
 
@@ -27,22 +44,41 @@ function getSelector(leafOrNode: HTMLElement, path: string[] = []): string | nul
   return getSelector(leafOrNode.parentElement, [selector, ...path]);
 }
 
-function addNode(parent: HTMLElement, target: HTMLElement) {
-  return Maybe.fromNullable(addTemplate(template, '.node', parent, target))
+function getNextTarget(target: HTMLElement) {
+  return Maybe.fromNullable(target.nextElementSibling)
+    .map((next) => next.nextElementSibling)
+    .getOrElse(null) as HTMLElement | null;
+}
+
+function addNode(parentOrSelector: HTMLElement, target: HTMLElement, dir: Dir = 'bottom') {
+  // const parent = Either.of(parentOrSelector)
+  //   .filter((el) => typeof el === 'string')
+  //   .map(F.flipCurried($)(rootNode)).getOr();
+  Maybe.of(parentOrSelector)
+    .map(F.flipCurried(insertBefore(target))(getTemplate('.node')))
     .map(F.curry($)('.leaf-area'))
-    .map(F.flipCurried(insertBefore())(target));
+    .map(append(getDropRow())())
+    .map(append(target)())
+    .map(append(getDropRow())())
+    .map(F.flipCurried(addLeaf(dir))(target));
 }
 
-function addLeaf(parent: HTMLElement, target: HTMLElement | null = null) {
-  Maybe.fromNullable(addTemplate(template, '.leaf', parent, target))
-    .map((leaf) => {
-      const index = $$('.leaf', rootNode).indexOf(leaf) + 1;
-      setElementText($('.leaf-number', leaf), String(index));
-    });
-  renumberLeaf();
+function addLeaf(dir: Dir = 'bottom') {
+  return (parent: HTMLElement, target: HTMLElement | null = null) => {
+    let newTarget: HTMLElement | null;
+    if (target == null) {
+      newTarget = dir === 'top' ? parent.children[1] as HTMLElement : null;
+    } else {
+      newTarget = dir === 'top' ? target : getNextTarget(target);
+    }
+    const dropRow = insertBefore(newTarget)(parent, getDropRow());
+    insertBefore(dropRow)(parent, getTemplate('.leaf'));
+    renumberLeaf();
+    return parent;
+  }
 }
 
-function getTargetSelector() {
+function getFocusedSelector() {
   return Maybe.fromNullable($<HTMLDivElement>('.leaf:focus,.node:focus'))
     .map(getSelector)
     .getOrElse('');
@@ -58,18 +94,17 @@ function renumberLeaf() {
   $$('.leaf').map((leaf, i) => setElementText($('.leaf-number', leaf), String(i + 1)));
 }
 
-function preAddLeaf(e: MouseEvent) {
+function dispatchAddNode(e: MouseEvent) {
   const button = e.target as HTMLButtonElement;
-  const dir = button.classList.contains('add-leaf-up') ? 'up' : 'down';
-  if (rootNode.children.length === 0) {
+  const dir: Dir = button.classList.contains('add-leaf-up') ? 'top' : 'bottom';
+  if (rootNode.children.length === 1) {
     // 最初
-    addLeaf(rootNode);
+    addLeaf()(rootNode);
     return;
   }
-  if (rootNode.firstElementChild && rootNode.firstElementChild.classList.contains('leaf')) {
+  if (rootNode.children[1] && rootNode.children[1].classList.contains('leaf')) {
     // Leaf一個 -> join
-    addNode(rootNode, rootNode.firstElementChild as HTMLElement)
-      .map((leaf) => addLeaf(leaf.parentElement as HTMLElement, dir === 'up' ? leaf : null));
+    addNode(rootNode, rootNode.children[1] as HTMLElement, dir);
     return;
   }
   const { focusedSelector } = button.dataset;
@@ -77,7 +112,7 @@ function preAddLeaf(e: MouseEvent) {
   if (self == null) {
     // フォーカス無し　-> 一番外枠の最後に追加
     Maybe.fromNullable($('.leaf-area', rootNode))
-      .map((leafArea) => addLeaf(leafArea, dir === 'up' ? leafArea.firstElementChild as HTMLElement : null))
+      .map((leafArea) => addLeaf(dir)(leafArea))
     return;
   }
   if (self.parentElement) {
@@ -85,30 +120,48 @@ function preAddLeaf(e: MouseEvent) {
     const parent = self.parentElement;
     if (parent.classList.contains('rootNode')) {
       // 一番外枠 -> join
-      addNode(rootNode, rootNode.firstElementChild as HTMLElement)
-        .map((leaf) => addLeaf(leaf.parentElement as HTMLElement, dir === 'up' ? leaf : null));
+      addNode(rootNode, rootNode.children[1] as HTMLElement, dir);
       return;
     }
     // 通常の追加
-    addLeaf(self.parentElement, dir === 'up' ? self : self.nextElementSibling as HTMLElement);
+    addLeaf(dir)(self.parentElement, self);
+  }
+}
+
+function removeNode(target: HTMLElement) {
+  const parent = target.parentElement;
+  if (parent) {
+    if (target.nextElementSibling) {
+      parent.removeChild(target.nextElementSibling);
+    }
+    parent.removeChild(target);
+  }
+  return parent;
+}
+
+function setCss(el: HTMLElement | null, cssText: string) {
+  if (el) {
+    el.style.cssText = cssText;
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
-    listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getTargetSelector());
+    listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getFocusedSelector());
   });
-  getEventListeners('.add-leaf-down, .add-leaf-up').map((listener) => listener('click', preAddLeaf));
+  getEventListeners('.add-leaf-down, .add-leaf-up').map((listener) => listener('click', dispatchAddNode));
   getEventListener('.del-tree')('click', (e) => {
     Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
       .map(getTarget)
-      .map(removeChild)
+      .map(removeNode)
       .filter((parent) => $$(':scope > .leaf, :scope > .node', parent).length === 1)
       .map((parent) => {
         if (parent.parentElement) {
+          const parentNode = parent.parentElement.parentElement;
+          const dropRow = insertBefore(parent.parentElement)(parentNode, getDropRow());
           const node = $(':scope > .leaf, :scope > .node', parent);
-          insertBefore(parent.parentElement)(parent.parentElement.parentElement, node);
-          removeChild(parent.parentElement);
+          insertBefore(dropRow)(parentNode, node);
+          removeNode(parent.parentElement);
         }
       });
     renumberLeaf();
@@ -118,9 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .map(getTarget)
       .map((target) => {
         if (target.parentElement) {
-          addNode(target.parentElement, target)
-            .map((leaf) => addLeaf(leaf.parentElement as HTMLElement));
+          addNode(target.parentElement, target);
         }
       });
   });
+  append(getDropRow())()($('.leaf-area'));
 });
