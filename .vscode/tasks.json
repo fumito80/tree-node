@@ -5,15 +5,19 @@
   "tasks": [
     {
       "label": "run gulp",
-      // "type": "npm",
+      // "runner": "terminal",
+      "type": "process",
       // "script": "gulp",
       "command": "npm",
       "args": ["run", "gulp"],
-      // "options": {
-      //   "npm": {
-      //     "executable": "C:\\Windows\\System32\\wsl.exe"
-      //   }
-      // },
+      "options": {
+        "shell": {
+          "executable": "C:\\Windows\\System32\\wsl.exe"
+        }
+      },
+      "linux": {
+        "command": "/usr/bin/node"
+      },
       "group": {
         "kind": "build",
         "isDefault": true,

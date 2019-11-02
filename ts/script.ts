@@ -50,12 +50,8 @@ function getNextTarget(target: HTMLElement) {
     .getOrElse(null) as HTMLElement | null;
 }
 
-function addNode(parentOrSelector: HTMLElement, target: HTMLElement, dir: Dir = 'bottom') {
-  // const parent = Either.of(parentOrSelector)
-  //   .filter((el) => typeof el === 'string')
-  //   .map(F.flipCurried($)(rootNode)).getOr();
-  Maybe.of(parentOrSelector)
-    .map(F.flipCurried(insertBefore(target))(getTemplate('.node')))
+function addNode(parent: HTMLElement, target: HTMLElement, dir: Dir = 'bottom') {
+  Maybe.fromNullable(insertBefore(parent, getTemplate('.node'), target))
     .map(F.curry($)('.leaf-area'))
     .map(append(getDropRow())())
     .map(append(target)())
@@ -65,15 +61,13 @@ function addNode(parentOrSelector: HTMLElement, target: HTMLElement, dir: Dir = 
 
 function addLeaf(dir: Dir = 'bottom') {
   return (parent: HTMLElement, target: HTMLElement | null = null) => {
-    let newTarget: HTMLElement | null;
-    if (target == null) {
-      newTarget = dir === 'top' ? parent.children[1] as HTMLElement : null;
-    } else {
-      newTarget = dir === 'top' ? target : getNextTarget(target);
-    }
-    const dropRow = insertBefore(newTarget)(parent, getDropRow());
-    insertBefore(dropRow)(parent, getTemplate('.leaf'));
-    renumberLeaf();
+    Either.fromNullable(target)
+      .map(dir === 'top' ? I : getNextTarget)
+      .toRight(() => dir === 'top' ? parent.children[1] as HTMLElement : null)
+      .map(F.curry3(insertBefore)(parent)(getDropRow()))
+      .map(F.curry3(insertBefore)(parent)(getTemplate('.leaf')))
+      .map(F.invoke('focus'))
+      .map(renumberLeaf);
     return parent;
   }
 }
@@ -129,14 +123,12 @@ function dispatchAddNode(e: MouseEvent) {
 }
 
 function removeNode(target: HTMLElement) {
-  const parent = target.parentElement;
-  if (parent) {
-    if (target.nextElementSibling) {
-      parent.removeChild(target.nextElementSibling);
-    }
-    parent.removeChild(target);
-  }
-  return parent;
+  return Maybe.fromNullable(target.parentElement)
+    .tap((parent) => {
+      Maybe.fromNullable(target.nextElementSibling).map(parent.removeChild.bind(parent))
+      parent.removeChild(target);  
+    })
+    .getOrElse(null);
 }
 
 function setCss(el: HTMLElement | null, cssText: string) {
@@ -158,9 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .map((parent) => {
         if (parent.parentElement) {
           const parentNode = parent.parentElement.parentElement;
-          const dropRow = insertBefore(parent.parentElement)(parentNode, getDropRow());
+          const dropRow = insertBefore(parentNode, getDropRow(), parent.parentElement);
           const node = $(':scope > .leaf, :scope > .node', parent);
-          insertBefore(dropRow)(parentNode, node);
+          insertBefore(parentNode, node, dropRow);
           removeNode(parent.parentElement);
         }
       });
@@ -176,4 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
   append(getDropRow())()($('.leaf-area'));
+  getEventListeners('.badge-btn').map((listener) => listener('click', (e) => {
+    Maybe.fromNullable(e.target)
+      .map((el) => [el, (el as HTMLElement).dataset.defined] as [HTMLElement, string])
+      .map(([el, defined]) => {
+        el.dataset.defined = defined === 'yes' ? 'no' : 'yes';
+      });
+  }));
 });

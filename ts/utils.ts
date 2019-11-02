@@ -8,18 +8,16 @@ function $$(selector: string, parent: HTMLElement | Document = document) {
   return Array.from<HTMLElement>(parent.querySelectorAll(selector));
 }
 
-function insertBefore(refNode: HTMLElement | null = null) {
-  return (parent: HTMLElement | null = null, newNode: HTMLElement | null = null) => {
-    if (parent == null || newNode == null) {
-      return null;
-    }
-    return parent.insertBefore(newNode, refNode);
+function insertBefore(parent: HTMLElement | null = null, newNode: HTMLElement | null = null, refNode: HTMLElement | null = null) {
+  if (parent == null || newNode == null) {
+    return null;
   }
+  return parent.insertBefore(newNode, refNode);
 }
 
 function append(newNode: HTMLElement | null) {
   return (refNode: HTMLElement | null = null) => (parent: HTMLElement | null) => {
-    insertBefore(refNode)(parent, newNode);
+    insertBefore(parent, newNode, refNode);
     return parent;
   }
 }
@@ -49,18 +47,31 @@ function setElementText(el: HTMLElement | null, text: string) {
 interface FnSingle<T, U> { (a: T): U };
 
 const I = <T>(a: T) => a; // identity
+const W = <T, U>(f: { (a: T): { (a: T): U }}) => (x: T) => f(x)(x); // duplication
 const B = <T, U, V>(f: FnSingle<T, V>) => (g: FnSingle<U, T>) => (x: U) => f(g(x)); // compose
 const C = <T, U, V>(f: FnSingle<T, FnSingle<U, V>>) => (y: U) => (x: T) => f(x)(y); // flip
 
 type FnAny = { (a: any): any };
 
 namespace F {
+  export function eq<T>(a: T) {
+    return (b: T) => a === b;
+  }
+  export function invoke<T>(methodName: string, ...args: any[]) {
+    return (obj: any) => obj[methodName](...args) as T;
+  }
   export function flip<T, U, V>(f: { (a: T, b: U): V }) {
     return (b: U, a: T) => f(a, b);
   }
   export function curry<T, U, V>(f: { (a: T, b: U): V }) {
     return (a: T) => (b: U) => f(a, b);
   }
+  export function curry3<T, U, V, W>(f: { (a: T, b: U, c: V): W }) {
+    return (a: T) => (b: U) => (c: V) => f(a, b, c);
+  }
+  // export function curries<T>(f: { (...args: any): T }) {
+  //   return   (a: T) => (b: U) => f(a, b);
+  // }
   export function flipCurried<T, U, V>(f: { (a: T, b: U): V }) {
     return (b: U) => (a: T) => f(a, b);
   }
@@ -203,6 +214,7 @@ class Right<T> extends Either<T> implements IEither<T> {
     }
     return Either.right(this.value);
   }
+  public toRight = () => this;
 }
 
 class Left<T> extends Either<T> implements IEither<T> {
@@ -219,4 +231,7 @@ class Left<T> extends Either<T> implements IEither<T> {
   // public chain = (f) => this;
   // public getOrElseThrow = (a) => {throw new Error(a); };
   public filter = (_: any) => this as Left<T>;
+  public toRight<U>(f: FnMaybe<T, U>) {
+    return Either.of(f(this._value));
+  } 
 }
