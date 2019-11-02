@@ -8,6 +8,18 @@ type Dir = 'top' | 'bottom';
 function getTemplate(selector: string) {
   return Maybe.fromNullable(template.content.querySelector<HTMLElement>(selector))
     .map(F.flipCurried(document.importNode.bind(document))(true))
+    .tap((el) => {
+      $$('.droppable', el).forEach((el) => {
+        el.addEventListener('dragenter', (e) => {
+          setCss(e.target as HTMLElement, 'background-color: #44c0ff');
+          e.preventDefault();
+          return false;
+        });
+        el.addEventListener('dragleave', (e) => {
+          setCss(e.target as HTMLElement, 'background-color: transparent');
+        });
+      });
+    })
     .getOrElse(null);
 }
 
@@ -46,16 +58,13 @@ function getSelector(leafOrNode: HTMLElement, path: string[] = []): string | nul
 
 function getNextTarget(target: HTMLElement) {
   return Maybe.fromNullable(target.nextElementSibling)
-    .map((next) => next.nextElementSibling)
     .getOrElse(null) as HTMLElement | null;
 }
 
 function addNode(parent: HTMLElement, target: HTMLElement, dir: Dir = 'bottom') {
   Maybe.fromNullable(insertBefore(parent, getTemplate('.node'), target))
     .map(F.curry($)('.leaf-area'))
-    .map(append(getDropRow())())
     .map(append(target)())
-    .map(append(getDropRow())())
     .map(F.flipCurried(addLeaf(dir))(target));
 }
 
@@ -64,7 +73,6 @@ function addLeaf(dir: Dir = 'bottom') {
     Either.fromNullable(target)
       .map(dir === 'top' ? I : getNextTarget)
       .toRight(() => dir === 'top' ? parent.children[1] as HTMLElement : null)
-      .map(F.curry3(insertBefore)(parent)(getDropRow()))
       .map(F.curry3(insertBefore)(parent)(getTemplate('.leaf')))
       .map(F.invoke('focus'))
       .map(renumberLeaf);
@@ -73,9 +81,10 @@ function addLeaf(dir: Dir = 'bottom') {
 }
 
 function getFocusedSelector() {
-  return Maybe.fromNullable($<HTMLDivElement>('.leaf:focus,.node:focus'))
+  return Maybe.fromNullable($<HTMLDivElement>('.leaf-body:focus,.node-body:focus'))
+    .map((nodeBode) => nodeBode.parentElement)
     .map(getSelector)
-    .getOrElse('');
+    .getOrElse(undefined);
 }
 
 function getTarget(selector: string | null) {
@@ -85,20 +94,20 @@ function getTarget(selector: string | null) {
 }
 
 function renumberLeaf() {
-  $$('.leaf').map((leaf, i) => setElementText($('.leaf-number', leaf), String(i + 1)));
+  $$('.leaf-number').map((leaf, i) => setElementText(leaf, String(i + 1)));
 }
 
 function dispatchAddNode(e: MouseEvent) {
   const button = e.target as HTMLButtonElement;
   const dir: Dir = button.classList.contains('add-leaf-up') ? 'top' : 'bottom';
-  if (rootNode.children.length === 1) {
+  if (rootNode.children.length === 0) {
     // 最初
     addLeaf()(rootNode);
     return;
   }
-  if (rootNode.children[1] && rootNode.children[1].classList.contains('leaf')) {
+  if (rootNode.children[0] && rootNode.children[0].classList.contains('leaf')) {
     // Leaf一個 -> join
-    addNode(rootNode, rootNode.children[1] as HTMLElement, dir);
+    addNode(rootNode, rootNode.children[0] as HTMLElement, dir);
     return;
   }
   const { focusedSelector } = button.dataset;
@@ -114,7 +123,7 @@ function dispatchAddNode(e: MouseEvent) {
     const parent = self.parentElement;
     if (parent.classList.contains('rootNode')) {
       // 一番外枠 -> join
-      addNode(rootNode, rootNode.children[1] as HTMLElement, dir);
+      addNode(rootNode, rootNode.children[0] as HTMLElement, dir);
       return;
     }
     // 通常の追加
@@ -124,10 +133,7 @@ function dispatchAddNode(e: MouseEvent) {
 
 function removeNode(target: HTMLElement) {
   return Maybe.fromNullable(target.parentElement)
-    .tap((parent) => {
-      Maybe.fromNullable(target.nextElementSibling).map(parent.removeChild.bind(parent))
-      parent.removeChild(target);  
-    })
+    .tap(F.invoke('removeChild', target))
     .getOrElse(null);
 }
 
@@ -150,9 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .map((parent) => {
         if (parent.parentElement) {
           const parentNode = parent.parentElement.parentElement;
-          const dropRow = insertBefore(parentNode, getDropRow(), parent.parentElement);
           const node = $(':scope > .leaf, :scope > .node', parent);
-          insertBefore(parentNode, node, dropRow);
+          insertBefore(parentNode, node, parent.parentElement);
           removeNode(parent.parentElement);
         }
       });
@@ -167,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
   });
-  append(getDropRow())()($('.leaf-area'));
+  // append(getDropRow())()($('.leaf-area'));
   getEventListeners('.badge-btn').map((listener) => listener('click', (e) => {
     Maybe.fromNullable(e.target)
       .map((el) => [el, (el as HTMLElement).dataset.defined] as [HTMLElement, string])

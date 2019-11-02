@@ -32,24 +32,32 @@
     </main>
     <dialog></dialog>
     <template>
-        <div class="node" tabindex="0" draggable="true">
-            <div class="logical-operator-wrap">
-                <select class="form-control logical-operator">
-                    <option value="AND">AND</option>
-                    <option value="OR">OR</option>
-                    <option value="NAND">NAND</option>
-                </select>
+        <div class="node">
+            <div class="node-space-top droppable"></div>
+            <div class="node-body" tabindex="0" draggable="true">
+                <div class="logical-operator-wrap">
+                    <select class="form-control logical-operator">
+                        <option value="AND">AND</option>
+                        <option value="OR">OR</option>
+                        <option value="NAND">NAND</option>
+                    </select>
+                </div>
+                <div class="leaf-area"></div>
             </div>
-            <div class="leaf-area"></div>
+            <div class="node-space-bottom droppable"></div>
         </div>
-        <div class="leaf" tabindex="0" draggable="true">
-            <div class="leaf-number"></div>
-            <select class="form-control filter-type">
-                <option value="filter-field">項目検索</option>
-                <option value="filter-relative">相対検索</option>
-            </select>
-            <div class="leaf-content"></div>
-            <div class="leaf-menu"><button type="button" class="btn-leaf-menu btn btn-xs"><i class="fa fa-ellipsis-v"></i></button></div>
+        <div class="leaf">
+            <div class="leaf-space-top droppable"></div>
+            <div class="leaf-body" tabindex="0" draggable="true">
+                <div class="leaf-number"></div>
+                <select class="form-control filter-type">
+                    <option value="filter-field">項目検索</option>
+                    <option value="filter-relative">相対検索</option>
+                </select>
+                <div class="leaf-content"></div>
+                <div class="leaf-menu"><button type="button" class="btn-leaf-menu btn btn-xs"><i class="fa fa-ellipsis-v"></i></button></div>
+            </div>
+            <div class="leaf-space-bottom droppable"></div>
         </div>
         <div class="drop-row"></div>
     </template>
