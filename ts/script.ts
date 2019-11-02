@@ -154,11 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .map(removeNode)
       .filter((parent) => $$(':scope > .leaf, :scope > .node', parent).length === 1)
       .map((parent) => {
-        if (parent.parentElement) {
-          const parentNode = parent.parentElement.parentElement;
+        if (parent.parentElement && parent.parentElement.parentElement) {
+          const parentNode = parent.parentElement.parentElement.parentElement;
           const node = $(':scope > .leaf, :scope > .node', parent);
-          insertBefore(parentNode, node, parent.parentElement);
-          removeNode(parent.parentElement);
+          insertBefore(parentNode, node, parent.parentElement.parentElement);
+          removeNode(parent.parentElement.parentElement);
         }
       });
     renumberLeaf();
