@@ -149,6 +149,10 @@ main > section {
     display: flex;
 }
 
+.droppable.dragenter {
+    background-color: #44c0ff;
+}
+
 .badge-btn-spacer {
     padding: 4px;
     display: none;

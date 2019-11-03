@@ -9,33 +9,48 @@ function getTemplate(selector: string) {
   return Maybe.fromNullable(template.content.querySelector<HTMLElement>(selector))
     .map(F.flipCurried(document.importNode.bind(document))(true))
     .tap((el) => {
-      $$('.droppable', el).forEach((el) => {
-        el.addEventListener('dragenter', (e) => {
-          setCss(e.target as HTMLElement, 'background-color: #44c0ff');
-          e.preventDefault();
-          return false;
+      $$('.droppable', el).forEach((el2) => {
+        getEventListener(el2)('dragover', (e) => {
+          const target = e.target as HTMLElement;
+          if (target) {
+            e.preventDefault();
+            return false;
+          }
         });
-        el.addEventListener('dragleave', (e) => {
-          setCss(e.target as HTMLElement, 'background-color: transparent');
+        getEventListener(el2)('dragenter', (e) => {
+          const target = e.target as HTMLElement;
+          if (target) {
+            target.classList.add('dragenter');
+          }
+        });
+        getEventListener(el2)('dragleave', (e) => {
+          const target = e.target as HTMLElement;
+          if (target) {
+            target.classList.remove('dragenter');
+          }
+        });
+        getEventListener(el2)('drop', (e) => {
+          const target = e.target as HTMLElement;
+          if (target && target.parentElement && e.dataTransfer) {
+            target.classList.remove('dragenter');
+            const refNode = target.classList.contains('leaf-space-bottom') ? null : target.parentElement;
+            const srcElement = getTarget(e.dataTransfer.getData('text/plain'));
+            if (srcElement) {
+              const srcElementParent = srcElement.parentElement;
+              insertBefore(target.parentElement.parentElement, srcElement, refNode);
+              afterRemove(srcElementParent);
+            }
+          }
         });
       });
-    })
-    .getOrElse(null);
-}
-
-function getDropRow() {
-  return Maybe.fromNullable(getTemplate('.drop-row'))
-    .tap((el) => {
-      el.addEventListener('dragenter', (e) => {
-        setCss(e.target as HTMLElement, 'background-color: #44c0ff');
-        e.preventDefault();
-        return false;
-      });
-    })
-    .tap((el) => {
-      el.addEventListener('dragleave', (e) => {
-        setCss(e.target as HTMLElement, 'background-color: white');
-      });
+      Maybe.fromNullable($('.leaf-body', el))
+        .map(getEventListener)
+        .map((listener) => listener('dragstart', (e) => {
+          const target = e.target as HTMLElement;
+          if (target && target.parentElement && e.dataTransfer) {
+            e.dataTransfer.setData('text/plain', getSelector(target.parentElement) || '');
+          }
+        }));
     })
     .getOrElse(null);
 }
@@ -143,6 +158,20 @@ function setCss(el: HTMLElement | null, cssText: string) {
   }
 }
 
+function afterRemove(parent: HTMLElement | null) {
+  Maybe.fromNullable(parent)
+    .filter((parent) => $$(':scope > .leaf, :scope > .node', parent).length === 1)
+    .map((parent) => {
+      if (parent.parentElement && parent.parentElement.parentElement) {
+        const parentNode = parent.parentElement.parentElement.parentElement;
+        const node = $(':scope > .leaf, :scope > .node', parent);
+        insertBefore(parentNode, node, parent.parentElement.parentElement);
+        removeNode(parent.parentElement.parentElement);
+      }
+    });
+    renumberLeaf();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
     listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getFocusedSelector());
@@ -152,16 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
       .map(getTarget)
       .map(removeNode)
-      .filter((parent) => $$(':scope > .leaf, :scope > .node', parent).length === 1)
-      .map((parent) => {
-        if (parent.parentElement && parent.parentElement.parentElement) {
-          const parentNode = parent.parentElement.parentElement.parentElement;
-          const node = $(':scope > .leaf, :scope > .node', parent);
-          insertBefore(parentNode, node, parent.parentElement.parentElement);
-          removeNode(parent.parentElement.parentElement);
-        }
-      });
-    renumberLeaf();
+      .map(afterRemove);
   });
   getEventListener('.add-leaf-join')('click', (e) => {
     Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
