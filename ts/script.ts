@@ -11,36 +11,47 @@ function getTemplate(selector: string) {
     .tap((el) => {
       $$('.droppable', el).forEach((el2) => {
         getEventListener(el2)('dragover', (e) => {
-          const target = e.target as HTMLElement;
-          if (target) {
-            e.preventDefault();
-            return false;
-          }
+          Maybe.fromNullable(e.target)
+            .map(e.preventDefault.bind(e));
         });
         getEventListener(el2)('dragenter', (e) => {
-          const target = e.target as HTMLElement;
-          if (target) {
-            target.classList.add('dragenter');
-          }
+          Maybe.fromNullable(e.target as HTMLElement)
+            // .tap(F.invoke(['classList', 'add'], 'dragenter'))
+            // .map(F.invoke('parentElement'))
+            .filter((target) => {
+              if (target.parentElement && e.dataTransfer) {
+                const srcElement = getTarget(e.dataTransfer.types[0]);
+                if (target.parentElement === srcElement) {
+                  return false;
+                }
+                if (/space\-top/.test(target.className) && srcElement && target.parentElement === srcElement.nextElementSibling) {
+                  return false;
+                }
+                return true;
+              }
+              return false;
+            })
+            .tap(F.invoke(['classList', 'add'], 'dragenter'));
         });
         getEventListener(el2)('dragleave', (e) => {
-          const target = e.target as HTMLElement;
-          if (target) {
-            target.classList.remove('dragenter');
-          }
+          Maybe.fromNullable(e.target)
+            .map(F.invoke(['classList', 'remove'], 'dragenter'));
         });
         getEventListener(el2)('drop', (e) => {
-          const target = e.target as HTMLElement;
-          if (target && target.parentElement && e.dataTransfer) {
-            target.classList.remove('dragenter');
-            const refNode = target.classList.contains('leaf-space-bottom') ? null : target.parentElement;
-            const srcElement = getTarget(e.dataTransfer.getData('text/plain'));
-            if (srcElement) {
-              const srcElementParent = srcElement.parentElement;
-              insertBefore(target.parentElement.parentElement, srcElement, refNode);
-              afterRemove(srcElementParent);
-            }
-          }
+          Maybe.fromNullable(e.target as HTMLElement)
+            .filter(F.invoke(['classList', 'contains'], 'dragenter'))
+            .tap(F.invoke(['classList', 'remove'], 'dragenter'))
+            .map((target) => {
+              if (target.parentElement && e.dataTransfer) {
+                const refNode = /space\-bottom/.test(target.className) ? null : target.parentElement;
+                const srcElement = getTarget(e.dataTransfer.types[0]);
+                if (srcElement) {
+                  const srcElementParent = srcElement.parentElement;
+                  insertBefore(target.parentElement.parentElement, srcElement, refNode);
+                  afterRemove(srcElementParent);
+                }
+              }
+            });
         });
       });
       Maybe.fromNullable($('.leaf-body', el))
@@ -48,7 +59,7 @@ function getTemplate(selector: string) {
         .map((listener) => listener('dragstart', (e) => {
           const target = e.target as HTMLElement;
           if (target && target.parentElement && e.dataTransfer) {
-            e.dataTransfer.setData('text/plain', getSelector(target.parentElement) || '');
+            e.dataTransfer.setData(getSelector(target.parentElement) || '', '');
           }
         }));
     })

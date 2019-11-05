@@ -57,8 +57,26 @@ namespace F {
   export function eq<T>(a: T) {
     return (b: T) => a === b;
   }
-  export function invoke<T>(methodName: string, ...args: any[]) {
-    return (obj: any) => obj[methodName](...args) as T;
+  export function invoke<T>(methodNameOrArray: string | string[], ...args: any[]) {
+    if (typeof methodNameOrArray === 'string') {
+      return (obj: any) => {
+        if (obj == null || obj[methodNameOrArray] == null) {
+          return null;
+        }
+        return obj[methodNameOrArray](...args) as T;
+      }
+    }
+    const [methodName1, ...methodNames] = methodNameOrArray;
+    return (obj: any) => {
+      const methodOrObj = methodNames.reduce((acc, methodName) => {
+        const obj2 = acc[methodName];
+        return obj2 == null ? () => null : typeof obj2 === 'function' ? obj2.bind(acc) : obj2;
+      }, obj[methodName1]);
+      if (typeof methodOrObj === 'function') {
+        return methodOrObj(...args) as T;
+      }
+      return methodOrObj as T;
+    }
   }
   export function flip<T, U, V>(f: { (a: T, b: U): V }) {
     return (b: U, a: T) => f(a, b);
