@@ -136,24 +136,25 @@ function dispatchAddNode(e: MouseEvent) {
     addNode(rootNode, rootNode.children[0] as HTMLElement, dir);
     return;
   }
-  const { focusedSelector } = button.dataset;
-  const self = getTarget(focusedSelector || null);
-  if (self == null) {
+  // const { focusedSelector } = button.dataset;
+  // const self = getTarget(focusedSelector || null);
+  const target = $('input[name="node-selected"]:checked', rootNode);
+  if (target == null) {
     // フォーカス無し　-> 一番外枠の最後に追加
     Maybe.fromNullable($('.leaf-area', rootNode))
       .map((leafArea) => addLeaf(dir)(leafArea))
     return;
   }
-  if (self.parentElement) {
+  if (target.parentElement) {
     // フォーカス有り
-    const parent = self.parentElement;
+    const parent = target.parentElement;
     if (parent.classList.contains('rootNode')) {
       // 一番外枠 -> join
       addNode(rootNode, rootNode.children[0] as HTMLElement, dir);
       return;
     }
     // 通常の追加
-    addLeaf(dir)(self.parentElement, self);
+    addLeaf(dir)(target.parentElement, target);
   }
 }
 
@@ -184,19 +185,21 @@ function afterRemove(parent: HTMLElement | null) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
-    listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getFocusedSelector());
-  });
+  // getEventListeners('.add-leaf-down, .add-leaf-up, .add-leaf-join, .del-tree').map((listener) => {
+  //   listener('mousedown', (e) => (e.target as HTMLElement).dataset.focusedSelector = getFocusedSelector());
+  // });
   getEventListeners('.add-leaf-down, .add-leaf-up').map((listener) => listener('click', dispatchAddNode));
-  getEventListener('.del-tree')('click', (e) => {
-    Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
-      .map(getTarget)
+  getEventListener('.del-tree')('click', () => {
+    // Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
+    Maybe.fromNullable($('input[name="node-selected"]:checked', rootNode))
+      // .map(getTarget)
       .map(removeNode)
       .map(afterRemove);
   });
-  getEventListener('.add-leaf-join')('click', (e) => {
-    Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
-      .map(getTarget)
+  getEventListener('.add-leaf-join')('click', () => {
+    // Maybe.fromNullable((e.target as HTMLElement).dataset.focusedSelector)
+    Maybe.fromNullable($('input[name="node-selected"]:checked', rootNode))
+      // .map(getTarget)
       .map((target) => {
         if (target.parentElement) {
           addNode(target.parentElement, target);
