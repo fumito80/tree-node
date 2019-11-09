@@ -181,7 +181,7 @@ function afterRemove(parent: HTMLElement | null) {
         removeNode(parent.parentElement.parentElement);
       }
     });
-    renumberLeaf();
+  renumberLeaf();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
