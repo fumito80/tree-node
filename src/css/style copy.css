@@ -6,7 +6,7 @@ body {
     background-color: lightgrey;
     padding: 15px;
     display: grid;
-    grid-template-columns: 25% 75%;
+    grid-template-columns: 33% 66%;
     grid-column-gap: 10px;
 }
 
