@@ -12,45 +12,100 @@ body {
 
 aside {
     background-color: #ffffff;
+    padding: 15px;
 }
 
-aside ul {
+/* Collapsed tree view */
+
+.css-collapse ul {
     padding-inline-start: 15px;
-    padding-top: 4px;
+    overflow: hidden;
+    transition: all 0.3s 0s ease;
+    height: auto;
+    opacity: 1;
+    visibility: visible;
 }
 
-aside li {
+.css-collapse ul:first-child {
+    padding-inline-start: 0;
+}
+
+.css-collapse li {
     list-style-type: none;
-    padding-top: 4px;
 }
 
-.li-node {
-    display: grid;
-    grid-template-columns: min-content min-content;
-    align-items: baseline;
-    width: 0;
+.css-collapse input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: auto;
+    height: auto;
+    padding: 0 3px !important;
     cursor: pointer;
 }
 
-.li-node::before {
+.css-collapse input[type="checkbox"]::before {
+    color: #00a699;
     font-family: FontAwesome;
     content: '\f147';
 }
 
-.li-node:checked::before {
+.css-collapse input[type="checkbox"]:checked::before {
     content: '\f196';
 }
 
-.li-node::After {
+.css-collapse input[type="checkbox"]::After {
     content: attr(title);
-    display: block;
-    width: max-content;
     margin-left: 4px;
+    white-space: nowrap;
 }
 
-.li-node:checked ~ ul {
-    display: none;
+.css-collapse input[type="checkbox"]:not(:checked) ~ ul {
+    height: 0;
+    opacity: 0;
+    visibility: hidden;
 }
+
+/* link */
+
+a.node::before {
+    font-family: FontAwesome;
+    content: '\f1b3';
+    margin-right: 4px;
+}
+
+/* 
+.css-collapse label {
+    display: block;
+    margin-left: 15px;
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
+.css-collapse input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    display: inline;
+}
+
+.css-collapse input[type="checkbox"] + span {
+    cursor: pointer;
+}
+
+.css-collapse input[type="checkbox"] + span::before {
+    margin-right: 4px;
+    font-family: FontAwesome;
+    content: '\f147';
+}
+
+.css-collapse input[type="checkbox"]:checked + span::before {
+    content: '\f196';
+}
+
+.css-collapse input[type="checkbox"]:checked ~ label {
+    display: none;
+} */
 
 main > section {
     height: 100%;
