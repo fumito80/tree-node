@@ -18,7 +18,7 @@
         <div class="drop-helper"></div>
     </main>
     <template>
-        <div class="unit">
+        <div class="unit" draggable="true">
             <button class="btn btn-xs btn-secondary">ボタン1</button>
             <div class="drop-inner"></div>
             <div class="drop-around top"></div>
@@ -26,6 +26,12 @@
             <div class="drop-around bottom"></div>
             <div class="drop-around left"></div>
         </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="connector pos-l-1-3"> 
+            <path d="m550 0 Q 550 30 275 38 T 0 75" fill="none" stroke-width="12px" stroke="transparent" pointer-events="stroke"></path>
+            <path d="m550 0 Q 550 30 275 38 T 0 75" fill="none" stroke-width="2px" stroke="dodgerblue" pointer-events="none"></path>
+            <path d="m270 32 h10 v10 h-10 z" fill="transparent" stroke="none" pointer-events="fill"></path>
+            <path d="M270 32 L280 42 M270 42 L280 32" fill="none" stroke-width="2px" stroke="#222222" pointer-events="none"></path>
+         </svg>         
     </template>
     <script src="../node_modules/jquery/dist/jquery.min.js"></script>
     <script src="js/utils.js"></script>

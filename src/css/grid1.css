@@ -17,11 +17,12 @@ main {
     display: grid;
     grid-auto-columns: 230px;
     grid-column-gap: 45px;
-    grid-row-gap: 55px;
+    grid-row-gap: 75px;
     grid-auto-rows: 120px;
 }
 
 .unit {
+    z-index: 4;
     width: 230px;
     height: 120px;
     background-color: palegreen;
@@ -42,7 +43,7 @@ main {
     background-color: lightcyan;
 }
 
-.dragstart .drop-inner {
+.dragstart :not(.drag-source) .drop-inner {
     position: absolute;
     z-index: 4;
     top: 0;
@@ -52,7 +53,7 @@ main {
     border-radius: 2px;
 }
 
-.dragstart .drop-inner.dragenter {
+.dragstart :not(.drag-source) .drop-inner.dragenter {
     border: 6px solid deepskyblue;
 }
 
@@ -60,11 +61,11 @@ main {
     position: absolute;
 }
 
-.dragstart .drop-around.dragenter {
+.dragstart :not(.drag-source) .drop-around.dragenter {
     border-color: deepskyblue !important;
 }
 
-.dragstart .drop-around.top {
+.dragstart :not(.drag-source) .drop-around.top {
     z-index: 3;
     width: 100%;
     height: 55px;
@@ -73,7 +74,7 @@ main {
     border-bottom: 8px solid transparent;
 }
 
-.dragstart .drop-around.right {
+.dragstart :not(.drag-source) .drop-around.right {
     z-index: 2;
     width: 275px;
     height: 100%;
@@ -81,7 +82,7 @@ main {
     left: 100%;
 }
 
-.dragstart .edge > .drop-around.right {
+.dragstart :not(.drag-source) .edge > .drop-around.right {
     z-index: 1;
     width: 360px;
     height: 360px;
@@ -90,7 +91,7 @@ main {
     top: -120px;
 }
 
-.dragstart .drop-around.bottom {
+.dragstart :not(.drag-source) .drop-around.bottom {
     z-index: 2;
     width: 100%;
     height: calc(100% + 55px);
@@ -98,7 +99,7 @@ main {
     top: 100%;
 }
 
-.dragstart .edge > .drop-around.bottom {
+.dragstart :not(.drag-source) .edge > .drop-around.bottom {
     z-index: 1;
     width: 360px;
     height: 360px;
@@ -107,11 +108,49 @@ main {
     top: calc(100% - 40px);
 }
 
-.dragstart .drop-around.left {
+.dragstart :not(.drag-source) .drop-around.left {
     z-index: 3;
     width: 45px;
     height: 100%;
     top: 0;
     left: -45px;
     border-right: 8px solid transparent;
+}
+
+/* Connector */
+
+svg.connector {
+    position: absolute;
+    top: 100%;
+    right: 50%;
+    height: 75px;
+}
+
+svg.connector.pos-l-1-3 {
+    width: calc((230px + 45px) * 2);
+}
+
+svg.connector.pos-l-1-2 {
+    width: calc(230px + 45px * 1);
+}
+
+svg.connector path:nth-child(4) {
+    display: none;
+}
+
+svg.connector path:first-child:hover + path {
+    stroke: orange;
+}
+
+svg.connector path:nth-child(3) {
+    cursor: pointer;
+}
+
+svg.connector path:first-child:hover ~ path,
+svg.connector path:nth-child(3):hover + path {
+    display: block;
+}
+
+svg.connector path:nth-child(3):hover + path {
+    stroke: #222;
 }

@@ -29,7 +29,10 @@ function dragleave({ originalEvent: { target } }) {
     return document.importNode(tmpl, true);
   }
 
-  function dragstart({ originalEvent }) {
+  function dragstart({ originalEvent: { target, dataTransfer } }) {
+    if (target.classList.contains('unit')) {
+      target.classList.add('drag-source');
+    }
     $('main').addClass('dragstart');
   }
 
@@ -75,7 +78,10 @@ function dragleave({ originalEvent: { target } }) {
     }
   }
   
-  function dragend({ originalEvent }) {
+  function dragend({ originalEvent: { target } }) {
+    if (target.classList.contains('unit')) {
+      target.classList.remove('drag-source');
+    }
     $('main').removeClass('dragstart');
     $('.drop-helper').removeAttr('style');
     $('.unit').toArray().forEach(unit => {
@@ -144,10 +150,6 @@ function dragleave({ originalEvent: { target } }) {
     }
   }
     
-  $('aside a')
-    .on('dragstart', dragstart)
-    .on('dragend', dragend);
-  
   const $unit = $(getTemplate('.unit')).appendTo('main').addClass('edge');
   $unit[0].dataset.gridColumnStart = '1';
   $unit[0].dataset.gridRowStart = '1';
@@ -156,9 +158,11 @@ function dragleave({ originalEvent: { target } }) {
 
   $(document)
     // .find('.drop-inner')
-      .on('dragover', dragover)
-      .on('dragenter', dragenter)
-      .on('dragleave', dragleave)
-      .on('drop', drop);
+    .on('dragstart', dragstart)
+    .on('dragend', dragend)
+    .on('dragover', dragover)
+    .on('dragenter', dragenter)
+    .on('dragleave', dragleave)
+    .on('drop', drop);
 
 })(jQuery);
