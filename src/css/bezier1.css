@@ -1,0 +1,25 @@
+.connector {
+    position: absolute;
+    pointer-events: none;
+}
+
+.conn-close {
+    display: none;
+}
+
+.conn-close-box {
+    cursor: pointer;
+}
+
+.conn-line-bg:hover ~ .conn-line {
+    stroke: orange;
+}
+
+.conn-line-bg:hover ~ path,
+.conn-close-box:hover ~ path {
+    display: block;
+}
+
+.conn-close-box:hover + path {
+    stroke: #222222;
+}
