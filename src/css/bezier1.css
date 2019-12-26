@@ -11,7 +11,8 @@
     cursor: pointer;
 }
 
-.conn-line-bg:hover ~ .conn-line {
+.conn-line-bg:hover ~ .conn-line,
+.conn-close-box:hover ~ .conn-line {
     stroke: orange;
 }
 
