@@ -9,56 +9,50 @@ function setD(pathes, d) {
 }
 
 function get4ponitsBezier(t, m, c0, c1, c2) {
-  return (1 - t) ** 3 * m + 3 * (1 - t) ** 2 * t * c0 + 3 * (1 - t) * t ** 2 * c1 + t ** 3 * c2;
+  const p = (1 - t) ** 3 * m + 3 * (1 - t) ** 2 * t * c0 + 3 * (1 - t) * t ** 2 * c1 + t ** 3 * c2;
+  return Math.round(p * 1E+3) / 1E+3;
 }
 
-function cubic(a, b, c, d) {
-    let x;
-    
-    const f = (((3 * c) / a) - (((b * b) / (a * a)))) / 3;
-    const g = ((2 * ((b ** 3) / (a ** 3)) - (9 * b * c / (a * a)) + ((27 * (d / a))))) / 27;
-    const h = (((g * g) / 4) + ((f ** 3) / 27));
+function cubic(a, b1, c1, d1) {
 
-    if (h > 0) {
-      const m = -(g / 2) + (Math.sqrt(h));
-      let k = m < 0 ? -1 : 1;
-      let m2 = (m * k) ** (1 / 3);
-      m2 = m2 * k;
-      const n = - (g / 2) - (Math.sqrt(h));
-      k = n < 0 ? -1 : 1;
-      let n2 = (n * k) ** (1 / 3);
-      n2 = n2 * k;
-      x = (m2 + n2) - (b / (3 * a));        
-    } else {
-      const r = Math.sqrt((g * g / 4) - h);
-      const k = r < 0 ? -1 : 1;
-      const rc = (r * k) ** (1 / 3) * k;
-      const theta = Math.acos((- g / (2 * r)));
-      x = 2 * (rc * Math.cos(theta / 3)) - (b / (3 * a));
-      x = x * 1E+14;
-      x = Math.round(x);
-      x = (x / 1E+14);
-    }
-    
-    if ((f + g + h) === 0) {
-      let sign;
-      if (d < 0) {
-        sign = -1;
-      } else if (d >= 0) {
-        sign = 1;
-      }
-      let dans;
-      if (sign > 0) {
-        dans = Math.pow((d / a),(1/3));
-        dans = dans * -1;
-      } else if (sign < 0) {
-        d = d * -1;
-        dans = Math.pow((d / a),(1/3));
-      }
-      x = dans;
-    }
-    return x;
-}
+  const b = b1 / a;
+  const c = c1 / a;
+  const d = d1 / a;
+  const q = (3 * c - (b * b)) / 9;
+  const r = (- (27 * d) + b * (9 * c - 2 * (b * b))) / 54;
+  const discrim = q ** 3 + r ** 2;
+  const term = b / 3;
+
+  if (discrim > 0) {
+    let s = r + Math.sqrt(discrim);
+    s = (s < 0) ? - ((- s) ** 1 / 3) : s ** (1 / 3);
+    let t = r - Math.sqrt(discrim);
+    t = (t < 0) ? - ((- t) ** 1 / 3) : t ** (1 / 3);
+    const term2 = - (term + (s + t) / 2);
+    return [
+      - term + s + t,
+      term2,
+      term2,
+    ];
+  }
+
+  if (discrim === 0) {
+    const r13 = ((r < 0) ? - ((- r) ** 1 / 3) : r ** (1 / 3));
+    return [
+      - term + 2 * r13,
+      - (r13 + term),
+      - (r13 + term),
+    ];
+  }
+
+  const dum = Math.acos(r / Math.sqrt((- q) ** 3));
+  const r13 = 2.0 * Math.sqrt(- q);
+  return [
+    - term + r13 * Math.cos(dum / 3),
+    - term + r13 * Math.cos((dum + 2 * Math.PI) / 3),
+    - term + r13 * Math.cos((dum + 4 * Math.PI) / 3),
+  ];
+} 
 
 $(_ => {
   const svg = getTemplate('.connector');
@@ -83,27 +77,17 @@ $(_ => {
   ]);
 
   const x = 100;
+
+  // ベジェ曲線の方程式(tからx,yを求める)からtを求める3次方程式に変換する（At³ + Bt² + Ct + D = 0）
   const A = c2.x - 3 * c1.x + 3 * c0.x - m.x;
-  // const A = 600;
   const B = 3 * c1.x - 6 * c0.x + 3 * m.x;
   const C = 3 * c0.x - 3 * m.x;
   const D = m.x - x;
   
-  // So we need to solve At³ + Bt² + Ct + D = 0     
-  const t = cubic(A, B, C, D);
-
-  console.log(A, B, C, D, t);
-
-  // const t = 0.38696;
+  const roots = cubic(A, B, C, D);
+  const t = roots.find(root => root > 0 && root < 1);
 
   const px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
-  
-  // let t = 0.3;
-  // let px = 300;
-  // while (px > 200 && t < 1) {
-  //   t += 0.01;
-  //   px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
-  // }
   const py = get4ponitsBezier(t, m.y, c0.y, c1.y, c2.y);
 
   setD(svg.querySelectorAll('.conn-close'), [
