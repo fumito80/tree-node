@@ -13,31 +13,31 @@ function get4ponitsBezier(t, m, c0, c1, c2) {
 }
 
 function cubic(a, b, c, d) {
-    let m,m2,k,n,n2,x,r,rc;
+    let x;
     
-    const f = eval(((3*c)/a) - (((b*b)/(a*a))))/3;
-    const g = eval((2*((b*b*b)/(a*a*a))-(9*b*c/(a*a)) + ((27*(d/a)))))/27;
-    const h = eval(((g*g)/4) + ((f*f*f)/27));
+    const f = (((3 * c) / a) - (((b * b) / (a * a)))) / 3;
+    const g = ((2 * ((b ** 3) / (a ** 3)) - (9 * b * c / (a * a)) + ((27 * (d / a))))) / 27;
+    const h = (((g * g) / 4) + ((f ** 3) / 27));
 
-    if (h > 0) {        
-      m = eval(-(g/2)+ (Math.sqrt(h)));
-      k = m < 0 ? -1:1;
-      m2 = eval(Math.pow((m*k),(1/3)));
-      m2 = m2*k;
-      n = eval(-(g/2)- (Math.sqrt(h)));
-      k = n<0 ? -1:1;
-      n2 = eval(Math.pow((n*k),(1/3)));
-      n2 = n2*k;
-      x= eval ((m2 + n2) - (b/(3*a)));        
-    }else {
-      r = (eval(Math.sqrt((g*g/4)-h)));
-      k = r<0 ? -1:1;
-      rc = Math.pow((r*k),(1/3))*k;
-      const theta = Math.acos((-g/(2*r)));
-      x=eval (2*(rc*Math.cos(theta/3))-(b/(3*a)));
-      x=x*1E+14;
-      x=Math.round(x);
-      x=(x/1E+14);
+    if (h > 0) {
+      const m = -(g / 2) + (Math.sqrt(h));
+      let k = m < 0 ? -1 : 1;
+      let m2 = (m * k) ** (1 / 3);
+      m2 = m2 * k;
+      const n = - (g / 2) - (Math.sqrt(h));
+      k = n < 0 ? -1 : 1;
+      let n2 = (n * k) ** (1 / 3);
+      n2 = n2 * k;
+      x = (m2 + n2) - (b / (3 * a));        
+    } else {
+      const r = Math.sqrt((g * g / 4) - h);
+      const k = r < 0 ? -1 : 1;
+      const rc = (r * k) ** (1 / 3) * k;
+      const theta = Math.acos((- g / (2 * r)));
+      x = 2 * (rc * Math.cos(theta / 3)) - (b / (3 * a));
+      x = x * 1E+14;
+      x = Math.round(x);
+      x = (x / 1E+14);
     }
     
     if ((f + g + h) === 0) {
@@ -49,11 +49,11 @@ function cubic(a, b, c, d) {
       }
       let dans;
       if (sign > 0) {
-        dans = Math.pow((d/a),(1/3));
+        dans = Math.pow((d / a),(1/3));
         dans = dans * -1;
       } else if (sign < 0) {
         d = d * -1;
-        dans = Math.pow((d/a),(1/3));
+        dans = Math.pow((d / a),(1/3));
       }
       x = dans;
     }
@@ -82,24 +82,28 @@ $(_ => {
     [c2.x, c2.y],
   ]);
 
-  // const x = 100;
-  // const A = c2.x - 3 * c1.x + 3 * c0.x - m.x;
-  // const B = 3 * c1.x - 6 * c0.x + 3 * m.x;
-  // const C = 3 * c0.x - 3 * m.x;
-  // const D = m.x - x;
+  const x = 100;
+  const A = c2.x - 3 * c1.x + 3 * c0.x - m.x;
+  // const A = 600;
+  const B = 3 * c1.x - 6 * c0.x + 3 * m.x;
+  const C = 3 * c0.x - 3 * m.x;
+  const D = m.x - x;
   
   // So we need to solve At³ + Bt² + Ct + D = 0     
-  // var t = cubic(A, B, C, D);
+  const t = cubic(A, B, C, D);
 
-  // const px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
-  // const py = get4ponitsBezier(t, m.y, c0.y, c1.y, c2.y);
+  console.log(A, B, C, D, t);
+
+  // const t = 0.38696;
+
+  const px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
   
-  let t = 0.3;
-  let px = 0;
-  while (px < 100 && t < 1) {
-    t += 0.01;
-    px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
-  }
+  // let t = 0.3;
+  // let px = 300;
+  // while (px > 200 && t < 1) {
+  //   t += 0.01;
+  //   px = get4ponitsBezier(t, m.x, c0.x, c1.x, c2.x);
+  // }
   const py = get4ponitsBezier(t, m.y, c0.y, c1.y, c2.y);
 
   setD(svg.querySelectorAll('.conn-close'), [
