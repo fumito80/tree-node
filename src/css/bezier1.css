@@ -24,3 +24,13 @@
 .conn-close-box:hover + path {
     stroke: #222222;
 }
+
+/* venn diagrams */
+.grid-venn {
+    width: min-content;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: min-content min-content;
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
+}

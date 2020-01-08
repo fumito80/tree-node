@@ -52,7 +52,44 @@ function cubic(a, b1, c1, d1) {
     - term + r13 * Math.cos((dum + 2 * Math.PI) / 3),
     - term + r13 * Math.cos((dum + 4 * Math.PI) / 3),
   ];
-} 
+}
+
+function drawArc(ctx, px, py) {
+  ctx.arc(px, 20, 15, 0, Math.PI * 2);
+}
+
+function drawVenn(type, backgroundColor, fillColorL, composite, fillColorR) { 
+  const [offsetX, offsetY] = [0, 0];
+  const canvas = document.createElement('canvas');
+  Object.assign(canvas.style, {
+    backgroundColor,
+    border: '1px solid darkgray',
+    borderRadius: '3px',
+  });
+  document.querySelector('.grid-venn').append(canvas);
+  [canvas.width, canvas.height] = [60, 40];
+  const ctx = canvas.getContext('2d');
+  // Fill
+  ctx.fillStyle = fillColorL;
+  drawArc(ctx, 21);
+  ctx.fill();
+  ctx.globalCompositeOperation = composite;
+  ctx.fillStyle = fillColorR;
+  ctx.beginPath();
+  drawArc(ctx, 39);
+  ctx.fill();
+  // Stroke
+  ctx.beginPath();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = 'darkgray';
+  drawArc(ctx, 21);
+  ctx.stroke();
+  ctx.beginPath();
+  drawArc(ctx, 39);
+  ctx.stroke();
+  ctx.fillStyle = '#222222';
+  ctx.fillText(type, 2, 10);
+}
 
 $(_ => {
   const svg = getTemplate('.connector');
@@ -60,14 +97,18 @@ $(_ => {
   Object.assign(svg.style, {
     width: '300px',
     height: '200px',
-    left:'100px',
+    left:'200px',
     top: '100px',
   });
 
-  const m = { x: 0, y: 0 };
-  const c0 = { x: 0, y: 200 * (2 / 3) };
-  const c1 = { x: 300, y: 200 * (2 / 3) };
-  const c2 = { x: 300, y: 200 };
+  const m = { x: 1, y: 0 };
+  const c0 = { x: 1, y: 200 * (2 / 3) };
+  const c1 = { x: 299, y: 200 * (2 / 3) };
+  const c2 = { x: 299, y: 200 };
+  // const m = { x: 300, y: 0 };
+  // const c0 = { x: 300, y: 200 * (2 / 3) };
+  // const c1 = { x: 0, y: 200 * (2 / 3) };
+  // const c2 = { x: 0, y: 200 };
 
   setD(svg.querySelectorAll('.conn-line-bg, .conn-line'), [
     ['M', m.x, m.y],
@@ -102,4 +143,23 @@ $(_ => {
     ['v', 10],
     ['h', -10, 'Z'],
   ]);
+
+  const posiColor = 'white';
+  const negaColor = 'lawngreen';
+
+  // AND
+  drawVenn('AND', posiColor, negaColor, 'source-in', negaColor);
+  // NAND
+  drawVenn('NAND', negaColor, posiColor, 'source-in', posiColor);
+  // OR
+  drawVenn('OR', posiColor, negaColor, 'source-over', negaColor);
+  // NOR
+  drawVenn('NOR', negaColor, posiColor, 'source-over', posiColor);
+  // XOR
+  drawVenn('XOR', posiColor, negaColor, 'xor', negaColor);
+  // EQV
+  drawVenn('EQV', negaColor, posiColor, 'xor', posiColor);
+  // IMP
+  drawVenn('IMP', negaColor, posiColor, 'source-over', negaColor);
+
 });
