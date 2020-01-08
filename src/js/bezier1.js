@@ -55,7 +55,7 @@ function cubic(a, b1, c1, d1) {
 }
 
 function drawArc(ctx, px, py) {
-  ctx.arc(px, 20, 15, 0, Math.PI * 2);
+  ctx.arc(px, 30, 15, 0, Math.PI * 2);
 }
 
 function drawVenn(type, backgroundColor, fillColorL, composite, fillColorR) { 
@@ -67,27 +67,28 @@ function drawVenn(type, backgroundColor, fillColorL, composite, fillColorR) {
     borderRadius: '3px',
   });
   document.querySelector('.grid-venn').append(canvas);
-  [canvas.width, canvas.height] = [60, 40];
+  [canvas.width, canvas.height] = [64, 52];
   const ctx = canvas.getContext('2d');
   // Fill
   ctx.fillStyle = fillColorL;
-  drawArc(ctx, 21);
+  drawArc(ctx, 23);
   ctx.fill();
   ctx.globalCompositeOperation = composite;
   ctx.fillStyle = fillColorR;
   ctx.beginPath();
-  drawArc(ctx, 39);
+  drawArc(ctx, 41);
   ctx.fill();
   // Stroke
   ctx.beginPath();
   ctx.globalCompositeOperation = 'source-over';
-  ctx.strokeStyle = 'darkgray';
-  drawArc(ctx, 21);
+  ctx.strokeStyle = 'gray';
+  drawArc(ctx, 23);
   ctx.stroke();
   ctx.beginPath();
-  drawArc(ctx, 39);
+  drawArc(ctx, 41);
   ctx.stroke();
   ctx.fillStyle = '#222222';
+  // Text
   ctx.fillText(type, 2, 10);
 }
 
