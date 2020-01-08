@@ -101,14 +101,10 @@ $(_ => {
     top: '100px',
   });
 
-  const m = { x: 1, y: 0 };
-  const c0 = { x: 1, y: 200 * (2 / 3) };
-  const c1 = { x: 299, y: 200 * (2 / 3) };
-  const c2 = { x: 299, y: 200 };
-  // const m = { x: 300, y: 0 };
-  // const c0 = { x: 300, y: 200 * (2 / 3) };
-  // const c1 = { x: 0, y: 200 * (2 / 3) };
-  // const c2 = { x: 0, y: 200 };
+  const m = { x: 2, y: 0 };
+  const c0 = { x: 2, y: 200 * (2 / 3) };
+  const c1 = { x: 298, y: 200 * (2 / 3) };
+  const c2 = { x: 298, y: 200 };
 
   setD(svg.querySelectorAll('.conn-line-bg, .conn-line'), [
     ['M', m.x, m.y],
