@@ -64,7 +64,7 @@ function drawVenn(type, backgroundColor, fillColorL, composite, fillColorR) {
   Object.assign(canvas.style, {
     backgroundColor,
     border: '1px solid darkgray',
-    borderRadius: '3px',
+    borderRadius: '2px',
   });
   document.querySelector('.grid-venn').append(canvas);
   [canvas.width, canvas.height] = [64, 52];
