@@ -7,6 +7,34 @@
   <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/theme.f6e596b07f9a1c491f4b.entry.css">
   <link rel="stylesheet" href="css/navs.css">
+  <style>
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      grid-column-gap: 10px;
+      margin: 15px !important;
+      height: calc(100% - 30px);
+    }
+
+    aside {
+      background-color: white;
+    }
+
+    main {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      grid-row-gap: 10px;
+    }
+
+    main > section:first-child {
+      background-color: white;
+    }
+  </style>
 <title>Document</title>
 </head>
 <body>
@@ -14,20 +42,27 @@
   <main>
     <section></section>
     <section>
-      <div class="nav-wrapper">
-        <ul class="nav nav-tabs" role="tablist">
-        </ul>
-        <div class="btn-group" role="group" aria-label="">
-          <button type="button" class="btn btn-default btn-sm"><i class="fa fa-chevron-left"></i></button>
-          <button type="button" class="btn btn-default btn-sm"><i class="fa fa-chevron-right"></i></button>
-        </div>
-      </div>
+      <ul is="bs-h-scrollable-navs" class="nav nav-tabs" role="tablist">
+      </ul>
       <div class="tab-content">
       </div>
     </section>
   </main>
   <script src="../node_modules/jquery/dist/jquery.min.js"></script>
   <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-  <script src="js/navs.js"></script>
+  <script src="js/bs-h-scrollable-navs.js"></script>
+  <script>
+    $(_ => {
+      const [$tabs, $contents] = [...Array(20)].reduce(([$tabs, $contents], _, i) => {
+        const tabName = 'Tab' + (i + 1);
+        return [
+          $tabs.append(`<li class="nav-item"><a href="#${tabName}" data-toggle="tab">${tabName}</a></li>`),
+          $contents.append(`<div class="tab-pane fade" id="${tabName}"></div>`),
+        ];
+      }, [$('.nav-tabs'), $('.tab-content')]);
+      $tabs.find('li:first').addClass('active');
+      $contents.find('div:first').addClass('show active');
+    });
+  </script>
 </body>
 </html>

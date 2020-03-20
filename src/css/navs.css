@@ -1,77 +1,59 @@
-html,
-body {
-  height: 100%;
-}
-
-body {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  grid-column-gap: 10px;
-  margin: 15px !important;
-  height: calc(100% - 30px);
-}
-
-aside {
-  background-color: white;
-}
-
-main {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  grid-row-gap: 10px;
-}
-
-main > section:first-child {
-  background-color: white;
-}
-
-/* begin */
-.nav-wrapper {
-  display: grid;
-  grid-template-columns: 1fr max-content;
-  grid-column-gap: 5px;
-}
-
-.nav-wrapper > .nav.nav-tabs {
+.h-scrollable-navs {
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-column-gap: 5px;
+  height: auto;
+}
+
+.h-scrollable-navs::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  border-bottom: 1px solid #bbb;
+}
+
+.h-scrollable-navs a {
+  white-space: nowrap;
+}
+
+.h-scrollable-navs > .nav {
+  position: relative;
+  border-bottom: 0;
+}
+
+.h-scrollable-navs > .nav {
   display: flex;
   overflow: hidden;
 }
 
-/* .nav-wrapper > .nav.nav-tabs::before {
-  content: '･･･';
-  position: absolute;
-  right: 0;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  background-color: #f5f5f5;
-  padding: 0 5px;
-} */
-
-.nav-wrapper > ul.nav.nav-tabs::after {
-  content: '';
-  width: 100%;
-  height: -webkit-fill-available;
-  z-index: 2;
-  background-color: #f5f5f5;
-}
-
-.nav-wrapper > .btn-group {
-  display: flex;
+.h-scrollable-navs > .bshsn-ellipsis,
+.h-scrollable-navs > .btn-group {
+  display: none;
   align-items: center;
 }
 
-.nav-wrapper > .btn-group::before {
-  content: '･･･';
-  left: -30px;
-  width: 30px;
-  position: absolute;
-  height: 99%;
+.h-scrollable-navs.ellipsis-prev > .bshsn-prev,
+.h-scrollable-navs.ellipsis-next > .bshsn-next {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
+  color: #333;
+  pointer-events: none
+}
+
+.h-scrollable-navs.ellipsis-prev > .btn-group,
+.h-scrollable-navs.ellipsis-next > .btn-group {
+  display: flex;
+}
+
+.h-scrollable-navs.ellipsis-prev {
+  grid-template-columns: min-content 1fr max-content;
+}
+
+.h-scrollable-navs.ellipsis-next {
+  grid-template-columns: 1fr min-content max-content;
+}
+
+.h-scrollable-navs.ellipsis-prev.ellipsis-next {
+  grid-template-columns: min-content 1fr min-content max-content;
 }
